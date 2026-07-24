@@ -1,0 +1,28 @@
+# Core veRL / GRPO training stack.
+accelerate
+codetiming
+datasets
+dill
+hydra-core
+liger-kernel
+math-verify[antlr4_9_3]
+numpy
+openai
+pandas
+peft
+pyarrow>=15.0.0
+pybind11
+pylatexenc
+ray[default]
+tensordict<0.6
+torchdata
+transformers
+vllm<=0.6.3
+wandb
+
+# Harness-G graph/API/test dependencies.
+fastapi
+pytest
+requests
+spacy
+uvicorn
