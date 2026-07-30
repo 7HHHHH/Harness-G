@@ -12,9 +12,9 @@ import sys
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ARTIFACT_ROOT = os.path.expanduser(
-    os.environ.get("CHUNK1200_ROOT", "~/harness_g_chunk1200_experiment")
+    os.environ.get("EXPERIMENT_ROOT", "~/harness_g_experiments")
 )
 
 
@@ -34,7 +34,12 @@ def main() -> None:
         "--root",
         default=DEFAULT_ARTIFACT_ROOT,
     )
-    parser.add_argument("--dataset_root", default=str(REPO_ROOT / "datasets"))
+    parser.add_argument(
+        "--dataset_root",
+        default=os.environ.get(
+            "DATASET_ROOT", str(Path(DEFAULT_ARTIFACT_ROOT) / "datasets")
+        ),
+    )
     parser.add_argument("--max_token_size", type=int, default=1200)
     parser.add_argument("--overlap_token_size", type=int, default=100)
     parser.add_argument("--tiktoken_model", default="gpt-4o-mini")
@@ -55,7 +60,7 @@ def main() -> None:
     if not source.is_file():
         raise FileNotFoundError(source)
 
-    final_dir = root / "corpora_chunk1200" / args.data_source
+    final_dir = root / "corpora" / args.data_source
     building_dir = final_dir.with_name(final_dir.name + ".building")
     if building_dir.exists():
         shutil.rmtree(building_dir)
@@ -66,7 +71,7 @@ def main() -> None:
     building_dir.mkdir(parents=True)
 
     source_snapshot = building_dir / "source_merged_blocks.jsonl"
-    chunk_snapshot = building_dir / "source_chunk1200.jsonl"
+    chunk_snapshot = building_dir / "source_chunks.jsonl"
     graph_input = building_dir / "graph_input.jsonl"
     chunk_index = building_dir / "chunk_index.jsonl"
     manifest_path = building_dir / "corpus_manifest.json"

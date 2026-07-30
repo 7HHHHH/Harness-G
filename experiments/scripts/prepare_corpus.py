@@ -12,9 +12,9 @@ import sys
 from pathlib import Path
 
 
-REPO_ROOT = Path(__file__).resolve().parents[3]
+REPO_ROOT = Path(__file__).resolve().parents[2]
 DEFAULT_ARTIFACT_ROOT = os.path.expanduser(
-    os.environ.get("CHUNK1200_ROOT", "~/harness_g_chunk1200_experiment")
+    os.environ.get("EXPERIMENT_ROOT", "~/harness_g_experiments")
 )
 
 
@@ -30,7 +30,7 @@ def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "--source",
-        default="data/search_r1_2wiki_chunk1200/corpus.jsonl",
+        default="data/search_r1_2wiki/corpus.jsonl",
     )
     parser.add_argument(
         "--root",
@@ -45,7 +45,7 @@ def main() -> None:
     code_root = Path(args.code_root).resolve()
     corpus_dir = root / "corpus"
     corpus_dir.mkdir(parents=True, exist_ok=True)
-    source_copy = corpus_dir / "source_chunk1200.jsonl"
+    source_copy = corpus_dir / "source_corpus.jsonl"
     graph_input = corpus_dir / "graph_input.jsonl"
     manifest_path = corpus_dir / "corpus_manifest.json"
 

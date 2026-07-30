@@ -5,6 +5,7 @@ source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 DATA_SOURCE=${1:?usage: launch_full_snc_dataset.sh DATA_SOURCE [trainer overrides...]}
 shift
 case "$DATA_SOURCE" in
+  2WikiMultiHopQA) SLUG=2wiki ;;
   HotpotQA) SLUG=hotpotqa ;;
   Musique) SLUG=musique ;;
   NQ) SLUG=nq ;;
@@ -14,33 +15,50 @@ case "$DATA_SOURCE" in
 esac
 
 WORKSPACE=$ROOT/workspace
-EXPERIMENT_NAME=${EXPERIMENT_NAME:-harness_g_snc_full_chunk1200_f1_3b_${SLUG}_b128_120_8g}
+EXPERIMENT_NAME=${EXPERIMENT_NAME:-harness_g_snc_full_f1_1p5b_${SLUG}_b128_120_8g}
 RUN_DIR=$ROOT/runs/$EXPERIMENT_NAME
 CHECKPOINT_DIR=$ROOT/checkpoints/Harness-G/$EXPERIMENT_NAME
 RESULTS_DIR=$ROOT/expr_results/$EXPERIMENT_NAME
-PROCESSED_DIR=$ROOT/data/$DATA_SOURCE/processed
-GRAPH_DIR=$ROOT/graphs_chunk1200/$DATA_SOURCE/harness_g_graph
-GRAPH_REPORT=$ROOT/reports/chunk1200/$DATA_SOURCE/graph_validation.json
-CORPUS_REPORT=$ROOT/corpora_chunk1200/$DATA_SOURCE/corpus_manifest.json
+BASE_MODEL=${BASE_MODEL:-Qwen/Qwen2.5-1.5B-Instruct}
+MODEL_NAME=${MODEL_NAME:-Qwen2.5-1.5B-Instruct}
+if [[ "$DATA_SOURCE" == "2WikiMultiHopQA" ]]; then
+  PROCESSED_DIR=$ROOT/data/processed
+  GRAPH_DIR=$ROOT/graph/harness_g_graph
+  GRAPH_REPORT=$ROOT/reports/graph_validation.json
+  CORPUS_REPORT=
+else
+  PROCESSED_DIR=$ROOT/data/$DATA_SOURCE/processed
+  GRAPH_DIR=$ROOT/graphs/$DATA_SOURCE/harness_g_graph
+  GRAPH_REPORT=$ROOT/reports/$DATA_SOURCE/graph_validation.json
+  CORPUS_REPORT=$ROOT/corpora/$DATA_SOURCE/corpus_manifest.json
+fi
 API_PORT=${API_PORT:-8012}
 EXPECTED_GPU_COUNT=${EXPECTED_GPU_COUNT:-8}
 MIN_GPU_FREE_MIB=${MIN_GPU_FREE_MIB:-70000}
 PY=${PYTHON_BIN:-python}
 
-"$PY" - "$GRAPH_REPORT" "$CORPUS_REPORT" "$DATA_SOURCE" "$GRAPH_DIR" "$PROCESSED_DIR" <<'PY'
+"$PY" - "$GRAPH_REPORT" "$CORPUS_REPORT" "$DATA_SOURCE" "$GRAPH_DIR" "$PROCESSED_DIR" "$BASE_MODEL" <<'PY'
 import json,sys
 from pathlib import Path
-graph_report,corpus_report,data_source,graph_dir,processed= sys.argv[1:]
-g=json.load(open(graph_report)); c=json.load(open(corpus_report))
+graph_report,corpus_report,data_source,graph_dir,processed,base_model=sys.argv[1:]
+g=json.load(open(graph_report))
 assert g.get('ok') is True,g
-assert c.get('ok') is True,c
-assert g.get('data_source')==data_source and c.get('data_source')==data_source,(g,c)
 assert Path(g.get('graph_dir','')).resolve()==Path(graph_dir).resolve(),g
-assert int(g.get('num_paragraphs'))==int(c.get('num_chunks')),(g,c)
-assert int(c.get('max_token_size'))==1200 and int(c.get('overlap_token_size'))==100,c
+if data_source=='2WikiMultiHopQA':
+ assert int(g.get('num_paragraphs'))==2811,g
+else:
+ c=json.load(open(corpus_report))
+ assert c.get('ok') is True,c
+ assert g.get('data_source')==data_source and c.get('data_source')==data_source,(g,c)
+ assert int(g.get('num_paragraphs'))==int(c.get('num_chunks')),(g,c)
+ assert int(c.get('max_token_size'))==1200 and int(c.get('overlap_token_size'))==100,c
 for split in ('train','dev','test'):
  p=Path(processed)/f'{split}.parquet'
  assert p.is_file() and p.stat().st_size>0,p
+model=Path(base_model)
+assert model.is_dir() and (model/'config.json').is_file(),model
+cfg=json.load(open(model/'config.json'))
+assert int(cfg.get('hidden_size',-1))==1536 and int(cfg.get('num_hidden_layers',-1))==28,cfg
 PY
 
 if pgrep -af 'python -m verl[.]trainer[.]main_ppo' >/dev/null; then
@@ -99,8 +117,8 @@ setsid nohup env \
   SAVE_FREQ=20 \
   TEST_FREQ=10 \
   DATA_SOURCE="$DATA_SOURCE" \
-    BASE_MODEL=Qwen/Qwen2.5-3B-Instruct \
-  MODEL_NAME=Qwen2.5-3B-Instruct \
+    BASE_MODEL="$BASE_MODEL" \
+  MODEL_NAME="$MODEL_NAME" \
   MAX_PROMPT_LENGTH=8192 \
   MAX_START_LENGTH=8192 \
   MAX_RESPONSE_LENGTH=2048 \
@@ -122,6 +140,8 @@ printf '%s\n' \
   "run_dir=$RUN_DIR" \
   "processed_dir=$PROCESSED_DIR" \
   "graph_dir=$GRAPH_DIR" \
+  "base_model=$BASE_MODEL" \
+  "model_name=$MODEL_NAME" \
   "adv_estimator=grpo_snc" \
   "chunk_size=1200" \
   "chunk_overlap=100"

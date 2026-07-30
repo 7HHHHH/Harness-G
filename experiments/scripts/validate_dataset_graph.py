@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate one dataset-specific Harness-G graph built from chunk1200 input."""
+"""Validate one dataset-specific Harness-G graph."""
 
 from __future__ import annotations
 
@@ -11,7 +11,7 @@ from pathlib import Path
 
 
 DEFAULT_ARTIFACT_ROOT = os.path.expanduser(
-    os.environ.get("CHUNK1200_ROOT", "~/harness_g_chunk1200_experiment")
+    os.environ.get("EXPERIMENT_ROOT", "~/harness_g_experiments")
 )
 
 import pandas as pd
@@ -37,16 +37,16 @@ def main() -> None:
     args = parser.parse_args()
 
     root = Path(args.root).resolve()
-    corpus_dir = root / "corpora_chunk1200" / args.data_source
+    corpus_dir = root / "corpora" / args.data_source
     graph_dir = (
         Path(args.graph_dir).resolve()
         if args.graph_dir
-        else root / "graphs_chunk1200" / args.data_source / "harness_g_graph"
+        else root / "graphs" / args.data_source / "harness_g_graph"
     )
     report_path = (
         Path(args.report_path).resolve()
         if args.report_path
-        else root / "reports" / "chunk1200" / args.data_source / "graph_validation.json"
+        else root / "reports" / args.data_source / "graph_validation.json"
     )
 
     corpus_manifest = json.loads(
@@ -95,7 +95,7 @@ def main() -> None:
         "slice_limit_preserved": int(corpus_manifest.get("max_slice_tokens", -1)) <= 1200,
         "graph_input_hash": sha256(corpus_dir / "graph_input.jsonl")
         == corpus_manifest.get("graph_input_sha256"),
-        "chunk_snapshot_hash": sha256(corpus_dir / "source_chunk1200.jsonl")
+        "chunk_snapshot_hash": sha256(corpus_dir / "source_chunks.jsonl")
         == corpus_manifest.get("chunk_snapshot_sha256"),
         "loader_one_record_per_chunk": int(corpus_manifest.get("loader_records", -1))
         == expected_count,

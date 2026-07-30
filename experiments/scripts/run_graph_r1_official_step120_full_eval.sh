@@ -3,7 +3,7 @@ set -Eeuo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 EVAL_REPO=${EVAL_REPO:-$REPO_ROOT}
-OUT_ROOT=${OUT_ROOT:-$ROOT/runs/graph_r1_official_eval_chunk1200_step120/full}
+OUT_ROOT=${OUT_ROOT:-$ROOT/runs/graph_r1_official_eval_step120/full}
 LOG=${LOG:-$ROOT/logs/graph_r1_official_step120_full_eval.log}
 PID_FILE=${PID_FILE:-$ROOT/logs/graph_r1_official_step120_full_eval.pid}
 LOCK=${LOCK:-$ROOT/logs/graph_r1_official_step120_full_eval.lock}
@@ -56,7 +56,7 @@ log "START Graph-R1 official full evaluation; selection=fixed-step-120; models=3
 for size in 3b 1p5b; do
   for row in "${rows[@]}"; do
     read -r dataset slug <<< "$row"
-    exp="harness_g_snc_full_chunk1200_f1_${size}_${slug}_b128_120_8g"
+    exp="harness_g_snc_full_f1_${size}_${slug}_b128_120_8g"
     results="$ROOT/expr_results/$exp/results_step120.json"
     out="$OUT_ROOT/$size/${dataset}_step120"
     mkdir -p "$out"

@@ -2,7 +2,7 @@
 set -euo pipefail
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 EVAL_REPO=${EVAL_REPO:-$REPO_ROOT}
-OUT_ROOT=${OUT_ROOT:-$ROOT/runs/graph_r1_official_eval_chunk1200/non_llm}
+OUT_ROOT=${OUT_ROOT:-$ROOT/runs/graph_r1_official_eval/non_llm}
 LOG=${LOG:-$ROOT/logs/graph_r1_official_nonllm_eval.log}
 PID_FILE=${PID_FILE:-$ROOT/logs/graph_r1_official_nonllm_eval.pid}
 LOCK=${LOCK:-$ROOT/logs/graph_r1_official_nonllm_eval.lock}
@@ -24,7 +24,7 @@ log "START Graph-R1 official EM/F1/R-Sim; selection=best-dev-F1; models=3b,1p5b"
 for size in 3b 1p5b; do
   for row in "${rows[@]}"; do
     read -r dataset slug <<< "$row"
-    exp=$(printf 'harness_g_snc_full_chunk1200_f1_%s_%s_b128_120_8g' "$size" "$slug")
+    exp=$(printf 'harness_g_snc_full_f1_%s_%s_b128_120_8g' "$size" "$slug")
     expr="$ROOT/expr_results/$exp"
     read -r step f1 <<< "$("$PY" - "$expr" <<'PY'
 import glob,json,math,os,re,sys

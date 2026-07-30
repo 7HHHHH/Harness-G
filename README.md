@@ -1,114 +1,161 @@
-# Harness-G: A Graph-Structured Harness for Search Agents
+<h1 align="center">Harness-G</h1>
 
-Harness-G trains RL search agents that navigate a **graph-structured evidence
-harness** instead of writing free-form retrieval queries. At every turn the
-policy chooses one action id from a discrete menu:
+<p align="center">
+  <strong>A Graph-Structured Harness for Search Agents</strong>
+</p>
 
-```text
-SELECT       keep a visible sentence as evidence
-LOOKUP       retrieve about a listed entity (the retrieval query is built
-             automatically from the question + already-selected evidence)
-ANSWER_WITH  harvest a visible sentence and finish in one step
-ANSWER       stop and answer from the selected evidence
-```
+<p align="center">
+  Official implementation of <em>Harness-G: A Graph-Structured Harness for Search Agents</em>
+</p>
 
-Training uses GRPO with **SNC (Structure-aware Navigation Credit)**: a frozen
-reference policy scores the answer information gain of each navigation step,
-credit is placed span-locally on the acting tokens, and enabling steps are
-re-credited through provenance-dependency propagation. The outcome reward is
-answer F1. See [`docs/snc_method.md`](docs/snc_method.md) for the method
-description.
+<p align="center">
+  Yanning Hou<sup>*</sup>, Haoyuan Chen<sup>*</sup>, Sihang Zhou<sup>†</sup>,
+  Xiaoshu Chen, Xirui Liu, Duanyang Yuan, Lingyuan Meng, Quan Liu, Jian Huang
+  <br>
+  National University of Defense Technology
+  <br>
+  <sup>*</sup>Equal contribution &nbsp;&nbsp; <sup>†</sup>Corresponding author
+</p>
 
-The code builds on [Graph-R1](https://github.com/LHRLAB/Graph-R1) and
-[VERL](https://github.com/volcengine/verl).
+<p align="center">
+  <img alt="Python 3.9" src="https://img.shields.io/badge/Python-3.9-3776AB?logo=python&logoColor=white">
+  <img alt="PyTorch 2.4" src="https://img.shields.io/badge/PyTorch-2.4-EE4C2C?logo=pytorch&logoColor=white">
+  <a href="LICENSE"><img alt="MIT License" src="https://img.shields.io/badge/License-MIT-2EA44F"></a>
+</p>
 
-## Final experiment protocol
+<p align="center">
+  <a href="#overview">Overview</a> ·
+  <a href="#method">Method</a> ·
+  <a href="#results">Results</a> ·
+  <a href="#quick-start">Quick Start</a> ·
+  <a href="#citation">Citation</a>
+</p>
 
-The main result is a 12-run matrix: {Qwen2.5-1.5B-Instruct, Qwen2.5-3B-Instruct}
-× six datasets, each trained and evaluated on the same dataset:
+<p align="center">
+  <img src="assets/readme/retrieval_interface.png" width="100%" alt="Harness-G structured retrieval interface">
+</p>
 
-```text
-2WikiMultiHopQA  HotpotQA  Musique  NQ  PopQA  TriviaQA
-```
+## Overview
 
-All method-side settings are **built into the code as defaults** — there are no
-ablation switches. Fixed configuration:
+Reinforcement-learning search agents typically generate free-form retrieval
+queries. Although the strings may look diverse, they often retrieve nearly
+identical evidence, leaving group-relative optimization with little meaningful
+retrieval contrast. We refer to this failure mode as **retrieval-equivalence
+collapse**.
 
-| Component | Setting |
-| --- | --- |
-| Corpus | Search-R1-compatible 1,200-token chunks, 100-token overlap |
-| Splits | 5,120 train / 128 dev / 128 test per dataset |
-| Hardware | 8 GPUs, tensor parallel 1 |
-| Rollouts / batches | 8 rollouts per prompt; train batch 128; PPO mini-batch 32 |
-| Schedule | 120 steps; save every 20; dev evaluation every 10 |
-| Lengths | prompt 8,192; response 2,048; tool response 4,096; ≤6 turns |
-| Objective | F1 outcome reward with `algorithm.adv_estimator=grpo_snc` |
-| SNC | reference scorer; span-local advantage; provenance dependencies; recursive complementarity propagation (γ=1.0); IG deadzone 1e-4; advantage scale floor 5e-4; frontier top-k 4 |
-| Optimization | actor LR 5e-7; clip 0.2; grad clip 1.0; KL coefficients 0.001 |
-| Numerical guards | fp32 logits; non-finite-gradient skip; dual clip 3.0 |
+Harness-G replaces free-form query generation with a finite menu of typed,
+verifiable actions over a programmatically induced
+paragraph–sentence–entity graph. The policy selects an action ID, while the
+environment handles query construction, graph navigation, validation, and
+deduplication.
 
-## Setup
+<p align="center">
+  <img src="assets/readme/retrieval_equivalence_collapse.png" width="92%" alt="Retrieval-equivalence collapse and the diversity preserved by Harness-G">
+</p>
+
+## Method
+
+<p align="center">
+  <img src="assets/readme/method_overview.png" width="100%" alt="Overview of the Harness-G framework">
+</p>
+
+Harness-G consists of three components:
+
+1. **Graph construction:** build a paragraph–sentence–entity graph without a
+   generative LLM.
+2. **Structured navigation:** expose a bounded, state-dependent action menu
+   instead of asking the policy to write retrieval queries.
+3. **Structured Non-Myopic Credit (SNC):** compare feasible same-state
+   alternatives and propagate downstream gains to enabling actions during
+   GRPO training.
+
+The frozen answerer and action previews are used only during training, so
+Harness-G introduces no additional scorer calls at inference time. Core
+implementations are available in
+[`harness_g/snc.py`](harness_g/snc.py) and
+[`harness_g/snc_trainer.py`](harness_g/snc_trainer.py).
+
+## Results
+
+Harness-G achieves the highest average F1 across six QA benchmarks at both
+evaluated Qwen2.5 model scales.
+
+| Backbone | Graph-R1 | Harness-G | Gain |
+| --- | ---: | ---: | ---: |
+| Qwen2.5-1.5B-Instruct | 40.09 | **50.83** | **+10.74** |
+| Qwen2.5-3B-Instruct | 51.26 | **55.24** | **+3.98** |
+
+With Qwen2.5-3B-Instruct, Harness-G improves over Graph-R1 by **+7.97 F1** on
+2WikiMultiHopQA, **+9.12 F1** on HotpotQA, and **+5.95 F1** on MuSiQue.
+
+## Installation
 
 ```bash
-conda create -n s3 python=3.9 -y
-conda run -n s3 python -m pip install -e .
-conda run -n s3 python -m pip install -r requirements.txt
-conda run -n s3 python -m spacy download en_core_web_sm
+git clone https://github.com/7HHHHH/Harness-G.git
+cd Harness-G
+
+ENV_NAME=s3 PYTHON_VERSION=3.9 \
+  bash scripts/setup_harness_g_conda.sh
+
+conda activate s3
+python -m pip install tiktoken
+python -m spacy download en_core_web_sm
 ```
 
-The optional LLM-based G-E evaluator needs an OpenAI-compatible endpoint via
-`OPENAI_API_KEY` / `OPENAI_BASE_URL` / `OPENAI_MODEL` environment variables.
-Never commit keys; `openai_api_key.txt` is git-ignored.
+The reported experiments use Linux, Python 3.9, PyTorch 2.4, and NVIDIA GPUs.
+If your CUDA version differs, install the corresponding PyTorch build first.
 
-## Running
+## Quick Start
 
-The versioned chunk1200 workflow lives in
-[`experiments/chunk1200/`](experiments/chunk1200/README.md):
+Set up an external workspace for corpora, graphs, checkpoints, and run outputs:
 
 ```bash
-# one-time workspace setup (artifact root outside Git)
-export CHUNK1200_ROOT=$HOME/harness_g_chunk1200_experiment
-bash experiments/chunk1200/scripts/setup_workspace.sh
-
-# prepare corpus + graph, then launch the 3B 8-GPU run (2WikiMultiHopQA)
-conda run -n s3 python experiments/chunk1200/scripts/prepare_corpus.py
-bash experiments/chunk1200/scripts/build_graph.sh
-bash experiments/chunk1200/scripts/launch_full_snc.sh
-
-# other datasets
-conda run -n s3 python experiments/chunk1200/scripts/prepare_dataset_chunk1200.py --data_source HotpotQA
-bash experiments/chunk1200/scripts/build_dataset_chunk1200_graph.sh HotpotQA
-bash experiments/chunk1200/scripts/launch_full_snc_dataset.sh HotpotQA        # 3B
-bash experiments/chunk1200/scripts/launch_full_snc_dataset_1p5b.sh HotpotQA   # 1.5B
+export EXPERIMENT_ROOT=/absolute/path/to/harness_g_experiments
+bash experiments/scripts/setup_workspace.sh
 ```
 
-The underlying training entry point is `scripts/train_harness_g_8gpu.sh`
-(dataset, model, GPU topology, and paths are passed as environment variables;
-everything method-related is a code default).
-
-Tests:
+Prepare a 2WikiMultiHopQA corpus, construct the graph, and launch training:
 
 ```bash
-conda run -n s3 python -m pytest tests/ -q
+python experiments/scripts/prepare_corpus.py \
+  --source /absolute/path/to/2wiki_corpus.jsonl
+
+bash experiments/scripts/build_graph.sh
+bash experiments/scripts/launch_full_snc.sh
 ```
 
-## Layout
+Launchers for HotpotQA, MuSiQue, NQ, PopQA, TriviaQA, and the 1.5B model are
+included under [`experiments/`](experiments/). See the
+[experiment guide](experiments/README.md) for dataset preparation
+and additional commands.
 
-```text
-harness_g/                          graph index, environment, protocol, SNC credit
-agent/tool/tools/harness_g_tool.py  VERL tool wrapper
-verl/                               VERL fork with grpo_snc advantage + guards
-scripts/run_harness_g_api.py        stateful navigation API
-scripts/train_harness_g_8gpu.sh     GRPO training launcher
-experiments/chunk1200/              final 12-run workflow
-evaluation/                         official EM/F1/R-Sim/G-E evaluation
-tests/                              regression tests
-docs/snc_method.md                  SNC method description
+Evaluation utilities for Exact Match, token-overlap F1, retrieval similarity,
+and generation quality are provided in [`evaluation/`](evaluation/).
+
+## Citation
+
+If you find Harness-G useful, please cite:
+
+```bibtex
+@misc{hou2026harnessg,
+  title  = {Harness-G: A Graph-Structured Harness for Search Agents},
+  author = {Yanning Hou and Haoyuan Chen and Sihang Zhou and Xiaoshu Chen
+            and Xirui Liu and Duanyang Yuan and Lingyuan Meng and Quan Liu
+            and Jian Huang},
+  year   = {2026},
+  note   = {Preprint}
+}
 ```
 
-Generated artifacts (`datasets/ expr/ expr_results/ runs/ checkpoints/
-outputs/ wandb/`) are git-ignored.
+The arXiv identifier will be added after the preprint becomes available.
+
+## Acknowledgements
+
+This project builds on
+[Graph-R1](https://github.com/LHRLAB/Graph-R1) and
+[VERL](https://github.com/volcengine/verl). We thank their authors and
+contributors for making their work publicly available.
 
 ## License
 
-See [LICENSE](LICENSE).
+This project is released under the [MIT License](LICENSE).

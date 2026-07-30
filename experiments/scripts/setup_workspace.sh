@@ -3,16 +3,17 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 CODE_ROOT=${CODE_ROOT:-$REPO_ROOT}
-SOURCE_DATA_ROOT=${SOURCE_DATA_ROOT:-$REPO_ROOT/datasets}
+SOURCE_DATA_ROOT=${SOURCE_DATA_ROOT:-$ROOT/datasets}
 WORKSPACE="$ROOT/workspace"
 
 if [[ ! -d "$CODE_ROOT/agent" || ! -d "$CODE_ROOT/harness_g" || ! -d "$CODE_ROOT/verl" ]]; then
-  echo "[ERROR] Graph-R1 runtime code is missing: $CODE_ROOT" >&2
+  echo "[ERROR] Harness-G runtime code is missing: $CODE_ROOT" >&2
   exit 2
 fi
 
 mkdir -p \
   "$ROOT/corpus" \
+  "$SOURCE_DATA_ROOT" \
   "$ROOT/data" \
   "$ROOT/graph" \
   "$ROOT/logs" \

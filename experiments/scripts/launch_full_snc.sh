@@ -3,7 +3,7 @@ set -euo pipefail
 
 source "$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)/common.sh"
 WORKSPACE="$ROOT/workspace"
-EXPERIMENT_NAME=${EXPERIMENT_NAME:-harness_g_snc_full_chunk1200_f1_3b_2wiki_b128_120_8g}
+EXPERIMENT_NAME=${EXPERIMENT_NAME:-harness_g_snc_full_f1_3b_2wiki_b128_120_8g}
 RUN_DIR="$ROOT/runs/$EXPERIMENT_NAME"
 
 if [[ ! -f "$ROOT/reports/graph_validation.json" ]]; then

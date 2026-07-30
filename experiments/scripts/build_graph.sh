@@ -14,7 +14,7 @@ if pgrep -af "verl.trainer.main_ppo" >/dev/null; then
   exit 3
 fi
 if [[ -f "$FINAL_GRAPH/graph_manifest.json" ]]; then
-  echo "[chunk1200] graph already complete: $FINAL_GRAPH"
+  echo "[experiment] graph already complete: $FINAL_GRAPH"
   exit 0
 fi
 if [[ -e "$BUILDING_GRAPH" ]]; then
@@ -52,4 +52,4 @@ PYTHONPATH="$CODE_ROOT" "${PYTHON[@]}" "$CODE_ROOT/scripts/build_harness_g_graph
 
 mv "$BUILDING_GRAPH" "$FINAL_GRAPH"
 "${PYTHON[@]}" "$SCRIPT_DIR/validate_graph.py" --root "$ROOT" \
-  2>&1 | tee "$ROOT/logs/validate_chunk_boundaries.log"
+  2>&1 | tee "$ROOT/logs/validate_corpus_boundaries.log"

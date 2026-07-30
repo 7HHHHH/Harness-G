@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate that the built graph preserved chunk1200 paragraph boundaries."""
+"""Validate that the built graph preserved the prepared paragraph boundaries."""
 
 from __future__ import annotations
 
@@ -10,7 +10,7 @@ from pathlib import Path
 
 
 DEFAULT_ARTIFACT_ROOT = os.path.expanduser(
-    os.environ.get("CHUNK1200_ROOT", "~/harness_g_chunk1200_experiment")
+    os.environ.get("EXPERIMENT_ROOT", "~/harness_g_experiments")
 )
 
 import pandas as pd
