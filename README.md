@@ -107,6 +107,10 @@ If your CUDA version differs, install the corresponding PyTorch build first.
 
 ## Quick Start
 
+Datasets are not redistributed in this repository. We use the six-dataset
+release provided by [Graph-R1](https://github.com/LHRLAB/Graph-R1#dataset-preparation);
+follow their dataset instructions to obtain the source corpora and QA splits.
+
 Set up an external workspace for corpora, graphs, checkpoints, and run outputs:
 
 ```bash
