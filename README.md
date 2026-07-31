@@ -5,7 +5,8 @@
 </p>
 
 <p align="center">
-  Official implementation of <em>Harness-G: A Graph-Structured Harness for Search Agents</em>
+  Official implementation of
+  <a href="https://arxiv.org/abs/2607.27652"><em>Harness-G: A Graph-Structured Harness for Search Agents</em></a>
 </p>
 
 <p align="center">
@@ -24,6 +25,7 @@
 </p>
 
 <p align="center">
+  <a href="https://arxiv.org/abs/2607.27652">Paper</a> ·
   <a href="#overview">Overview</a> ·
   <a href="#method">Method</a> ·
   <a href="#results">Results</a> ·
@@ -142,16 +144,17 @@ If you find Harness-G useful, please cite:
 
 ```bibtex
 @misc{hou2026harnessg,
-  title  = {Harness-G: A Graph-Structured Harness for Search Agents},
-  author = {Yanning Hou and Haoyuan Chen and Sihang Zhou and Xiaoshu Chen
-            and Xirui Liu and Duanyang Yuan and Lingyuan Meng and Quan Liu
-            and Jian Huang},
-  year   = {2026},
-  note   = {Preprint}
+  title         = {Harness-G: A Graph-Structured Harness for Search Agents},
+  author        = {Yanning Hou and Haoyuan Chen and Sihang Zhou and Xiaoshu Chen
+                   and Xirui Liu and Duanyang Yuan and Lingyuan Meng and Quan Liu
+                   and Jian Huang},
+  year          = {2026},
+  eprint        = {2607.27652},
+  archivePrefix = {arXiv},
+  primaryClass  = {cs.CL},
+  url           = {https://arxiv.org/abs/2607.27652}
 }
 ```
-
-The arXiv identifier will be added after the preprint becomes available.
 
 ## Acknowledgements
 
