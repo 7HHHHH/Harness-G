@@ -11,7 +11,7 @@
 
 <p align="center">
   Yanning Hou<sup>*</sup>, Haoyuan Chen<sup>*</sup>, Sihang Zhou<sup>†</sup>,
-  Xiaoshu Chen, Xirui Liu, Duanyang Yuan, Lingyuan Meng, Quan Liu, Jian Huang
+  Xiaoshu Chen, Xirui Liu, Duanyang Yuan, Lingyuan Meng, Siwei Wang, Quan Liu, Jian Huang
   <br>
   National University of Defense Technology
   <br>
@@ -146,8 +146,8 @@ If you find Harness-G useful, please cite:
 @misc{hou2026harnessg,
   title         = {Harness-G: A Graph-Structured Harness for Search Agents},
   author        = {Yanning Hou and Haoyuan Chen and Sihang Zhou and Xiaoshu Chen
-                   and Xirui Liu and Duanyang Yuan and Lingyuan Meng and Quan Liu
-                   and Jian Huang},
+                   and Xirui Liu and Duanyang Yuan and Lingyuan Meng and Siwei Wang
+                   and Quan Liu and Jian Huang},
   year          = {2026},
   eprint        = {2607.27652},
   archivePrefix = {arXiv},
